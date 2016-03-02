@@ -238,11 +238,7 @@ public class LoG_Filter_ implements ExtendedPlugInFilter, DialogListener {
 		gd.showDialog();
 		
 		pixundo=imp.getProcessor().getPixelsCopy();
-		/*
-		if (gd.wasCanceled()) {			
-			return DONE;
-		}
-		 */
+
 		return IJ.setupDialog(imp, flags);
 	}
 	
