@@ -4,18 +4,25 @@ import ij.IJ;
 import ij.ImageStack;
 import ij.process.FloatProcessor;
 import static java.lang.Math.*;
+import static ijaux.scale.SUtils.*;
 
 /*
-* @version 	    1.2.1 21 March 2014
+* @version 	    1.3 08  Jun 2019
+* 				- duplicate methods (SUtil) commented
+* 
+* 				1.2.1 21 March 2014
 * 			
 * 				1.2 20 Oct 2013
 * 				- fixed a bug in the computation of computeLapNKernel2D
 * 				- added double precision computations
 * 				- added power of the Laplacian (poweLap) computation
+* 
 * 				1.1.6
 * 				- refactoring getSigma -> getS
+* 
 * 				1.1.5
 * 				- regression to hw=3.0*sigma
+* 
 * 				1.1 17 Jul 2013
 * 				- sampling computation change hw=4.0*sigma
 * 				- code refactoring, parameter name change
@@ -48,7 +55,7 @@ import static java.lang.Math.*;
 
 public class GScaleSpace {
 	
-	public static final String version="1.2";	
+	public static final String version="1.3";	
 	
 	
 	public static boolean debug=IJ.debugMode;	
@@ -114,7 +121,7 @@ public class GScaleSpace {
 	
 	public GScaleSpace (int hw, float sk) {
 		r=hw;
-		GScaleSpace.swidth=sk;
+		swidth=sk;
 		float sigma=((float)(2*hw+1))/(2*sk);
 		if (debug)
 			System.out.println("r: "+hw+" sigma "+sigma);
@@ -813,28 +820,7 @@ public static float[] diffgaussT1D(int width) {
 		return kernel;
 	}
 	
-	public static double[] linspace(double a, double b, int N) {
-		double[] ret =new double[N];
-		ret[0]=a;
-		ret[N-1]=b;
-		double d=(b-a)/(N-1);
-		for (int i=1; i<N; i++)  {
-			ret[i]=ret[i-1]+d;
-		}
-		return ret;
-	}
-	
-	public static float[] linspace(float a, float b, int N) {
-		float[] ret =new float[N];
-		ret[0]=a;
-		ret[N-1]=b;
-		double d=(b-a)/(N-1);
-		for (int i=1; i<N; i++)  {
-			ret[i]=(float) (ret[i-1]+d);
-		}
-		return ret;
-	}
-
+ 
 	/**
 	 * calculates Binomial coefficients
 	 * 
@@ -870,7 +856,7 @@ public static float[] diffgaussT1D(int width) {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param n
 	 * @return
@@ -903,6 +889,7 @@ public static float[] diffgaussT1D(int width) {
 	 * @param x
 	 * @return
 	 */
+	/*
 	public static double polyval(double[] coef, double x) {		
 		final int n=coef.length-1;
 		double ret=coef[0];
@@ -912,12 +899,13 @@ public static float[] diffgaussT1D(int width) {
 		}	
 		return ret;
 	}
-	
+	*/
 	/** calculates the value of a polynomial assuming a_0 + \sum a_i x^i
 	 * @param coef
 	 * @param x
 	 * @return
 	 */
+	/*
 	public static double polyval2(double[] coef, double x) {			
 		final int n=coef.length-1;
 		double ret=coef[n];
@@ -927,15 +915,20 @@ public static float[] diffgaussT1D(int width) {
 		}
 		return ret;
 	}
-	
-	
+	*/
+	/**
+	 * Tensor product
+	 * 
+	 * @param fp1
+	 * @param fp2
+	 * @return
+	 */
 	public static ImageStack join(FloatProcessor fp1, FloatProcessor fp2) {
 		int width=fp1.getWidth();
 		int height=fp1.getHeight();		
-		//int depth=fp2.getWidth();
-		//int depth=fp1.getHeight();
 		if (width!=fp2.getWidth())
 			throw new IllegalArgumentException("size mismatch");
+		
 		ImageStack is=new ImageStack(width, height);
 	 	
 		IJLineIteratorIP<float[]> iter= 
@@ -945,7 +938,7 @@ public static float[] diffgaussT1D(int width) {
 		while (iter.hasNext()) {
 			//System.out.println("cnt "+cnt);
 			float[] coly=iter.next();
-			FloatProcessor aux=(FloatProcessor) fp1.duplicate();	
+			final FloatProcessor aux=(FloatProcessor) fp1.duplicate();	
 			for (int y=0; y<height; y++) {		
 				for (int x=0; x<width; x++) {
 					float value=aux.getf(x,y)*coly[x];
@@ -960,6 +953,13 @@ public static float[] diffgaussT1D(int width) {
 		return is;
 	}
 	
+	/**
+	 * Tensor product
+	 * 
+	 * @param fp1
+	 * @param colz
+	 * @return
+	 */
 	public static ImageStack join(FloatProcessor fp1, float[] colz) {
 		int width=fp1.getWidth();
 		int height=fp1.getHeight();		
@@ -967,7 +967,7 @@ public static float[] diffgaussT1D(int width) {
 		ImageStack is=new ImageStack(width, height);
 
 		for (int z=0; z<colz.length; z++) {		 
-			FloatProcessor aux=(FloatProcessor) fp1.duplicate();	
+			final FloatProcessor aux=(FloatProcessor) fp1.duplicate();	
 			for (int y=0; y<height; y++) {		
 				for (int x=0; x<width; x++) {
 					float value=aux.getf(x,y)*colz[z];
@@ -981,12 +981,16 @@ public static float[] diffgaussT1D(int width) {
 
 		return is;
 	}
+	
 	/**
+	 * Tensor product of two arrays
+	 * 
 	 * @param kernel
 	 * @param a
 	 * @param b
 	 * @return
 	 */
+	/*
 	public static float[] joinXY(float[][] kernel, int a, int b) {
 
 		int wa=kernel[a].length; // cols
@@ -1018,11 +1022,23 @@ public static float[] diffgaussT1D(int width) {
 		return jkernel;
 
 	}
+	*/
+	/**
+	 * Tensor product of two arrays. Replaced by a SUtils method.
+	 * 
+	 * @param kernel
+	 * @param a
+	 * @param b
+	 * @deprecated
+	 * @return
+	 */
+	public static float[] joinXY(float[][] kernel, int a, int b) {
+		return SUtils.joinXY(kernel,a,b);
+	}
 	
-		
 	/**
 	 * @param kernel
-	 */
+	 *
 	public static void flip(float[] kernel) {
 		final int s=kernel.length-1;
 		for (int i=0; i< kernel.length/2; i++) {
@@ -1031,10 +1047,18 @@ public static float[] diffgaussT1D(int width) {
 			kernel[s-i]=c;
 		}
 	}
+	*/
+	/**
+	 * @param kernel
+	 * @deprecated
+	 */
+	public static void flip(float[] kernel) {
+		 SUtils.flip(kernel);
+	}
 	
 	/**
 	 * @param kernel
-	 */
+	 *
 	public static void flip(double[] kernel) {
 		final int s=kernel.length-1;
 		for (int i=0; i< kernel.length/2; i++) {
@@ -1043,10 +1067,17 @@ public static float[] diffgaussT1D(int width) {
 			kernel[s-i]=c;
 		}
 	}
-	
+	*/
 	/**
 	 * @param kernel
+	 * @deprecated
 	 */
+	public static void flip(double[] kernel) {
+		 SUtils.flip(kernel);
+	}
+	/**
+	 * @param kernel
+	 *
 	public static void transp(double[] kernel, int sz) {
 		if (kernel.length/sz!=sz) 
 			return; // not a square kernel		
@@ -1061,10 +1092,11 @@ public static float[] diffgaussT1D(int width) {
 			}
 		}
 	}
+	*/
 	
 	/**
 	 * @param kernel
-	 */
+	 *
 	public static void transp(float[] kernel, int sz) {
 		if (kernel.length/sz!=sz) 
 			return; // not a square kernel		
@@ -1079,4 +1111,5 @@ public static float[] diffgaussT1D(int width) {
 			}
 		}
 	}
+	*/
 }

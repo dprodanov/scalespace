@@ -1,16 +1,25 @@
 package ijaux.scale;
 
-import ij.IJ;
+//import ij.IJ;
 
+/*
+ * 	Version 1.1  8 Jun 2019
+ *    		1.0  21 March 2014
+ *  
+ *  library utility
+ *  
+ */
 public class SUtils {
 
 	private SUtils() {
-		// TODO Auto-generated constructor stub
+		// no initialization
 	}
 	
 	
 	/**
+	 * 
 	 * @param kernel
+	 * @param sz
 	 */
 	public static void transp(double[] kernel, int sz) {
 		if (kernel.length/sz!=sz) 
@@ -28,7 +37,9 @@ public class SUtils {
 	}
 	
 	/**
+	 * 
 	 * @param kernel
+	 * @param sz
 	 */
 	public static void transp(float[] kernel, int sz) {
 		if (kernel.length/sz!=sz) 
@@ -73,41 +84,44 @@ public class SUtils {
 	
 	/**
 	 *  prints binomial coefficients
-	 */
+	 *
 	public static void printBinCoefs(double [][] bincoefs) {
 		for (int i=0; i<bincoefs.length; i++) {
 			for (int j=0; j<bincoefs[i].length; j++) {
-				//int a=i+1;
-				//int b=j+1;
 				IJ.log("C^ ["+i + "] _["+j+"] =" +bincoefs[i][j]);
 			}
 		}
 	}
-	
+	*/
 	/**
-	 *  implements Matlab function linear space
+	 *  implements Matlab\Octave function linear space
+	 * @param a
+	 * @param b
+	 * @param N
+	 * @return
 	 */
-	public static double[] linspace(double a, double b, int N) {
-		double[] ret =new double[N];
-		ret[0]=a;
-		ret[N-1]=b;
-		double d=(b-a)/(N-1);
-		for (int i=1; i<N; i++)  {
-			ret[i]=ret[i-1]+d;
+	public static double[] linspace(double a, double b, int n) {
+		final double[] ret = new double[n];
+		final double step =  (b-a)/(n-1);
+		for(int i=0;i<n;i++){
+			ret[i] = i*step +a;
 		}
 		return ret;
 	}
 	
 	/**
-	 *  implements Matlab function linear space
+	 *  implements Matlab\Octave function linear space
+	 * @param a
+	 * @param b
+	 * @param N
+	 * @return
 	 */
-	public static float[] linspace(float a, float b, int N) {
-		float[] ret =new float[N];
-		ret[0]=a;
-		ret[N-1]=b;
-		double d=(b-a)/(N-1);
-		for (int i=1; i<N; i++)  {
-			ret[i]=(float) (ret[i-1]+d);
+	public static float[] linspace(float a, float b, int n) {
+		final float[] ret = new float[n];
+		final double step =  (b-a)/(n-1);
+		// minimal loss of precision this way
+		for(int i=0;i<n;i++){
+			ret[i] =(float) (i*step +a);
 		}
 		return ret;
 	}
@@ -145,7 +159,11 @@ public class SUtils {
 		return ret;
 	}
 	
-	
+	/**
+	 * implements Matlab\Octave function cumulative sum cumsum 
+	 * @param seq
+	 * @return
+	 */
 	public static double[] cumsum(double[] seq) {
 		double ss=0;
 		double[] cs=new double[seq.length];
@@ -156,4 +174,43 @@ public class SUtils {
 		return cs;
 	}
 
+	/**
+	 * Tensor product of two arrays
+	 * 
+	 * @param kernel
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static float[] joinXY(float[][] kernel, int a, int b) {
+
+		int wa=kernel[a].length; // cols
+		int wb=kernel[b].length; // rows
+	
+		float[] jkernel=new float[wa*wb];
+
+		for (int i=0; i<jkernel.length; i++) {
+			jkernel[i]=1.0f;
+		}
+		if (a>=0) { // columns
+			final float[] col=kernel[a]; // ->wa
+			for (int c=0; c<wa; c++) { // col
+				for (int r=0; r<wb; r++) { // row							
+					final int idx=c + r*wa;
+					jkernel[idx]*=col[c];
+				}
+			}
+		}
+		if (b>=0) { // rows
+			final float[] row=kernel[b]; // ->wb
+			for (int r=0; r<wb; r++) { // row	
+				for (int c=0; c<wa; c++) { // col					
+					final int idx=c + r *wa;
+					jkernel[idx]*=row[r];
+				}
+			}
+		}
+		return jkernel;
+
+	}
 }
