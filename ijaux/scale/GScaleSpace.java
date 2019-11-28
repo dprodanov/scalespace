@@ -209,8 +209,8 @@ public class GScaleSpace {
 		int sz=2*r+1;
 		
 		double sigma2=((double)sz)/(2*swidth);
-		sigma2 = r/swidth;
-		//sigma2*=sigma2;
+		//sigma2 = r/swidth;
+		sigma2*=sigma2;
 		
 	 	
 		float[] kernel=new float[sz];
@@ -242,8 +242,8 @@ public class GScaleSpace {
 		int sz=2*r+1;
 		
 		double sigma2=((double)sz)/(2*swidth);
-		sigma2 = r/swidth;
-		//sigma2*=sigma2;
+		//sigma2 = r/swidth;
+		sigma2*=sigma2;
 	 	
 		double[] kernel=new double[sz];
 
@@ -322,7 +322,7 @@ public class GScaleSpace {
 		int sz=2*r+1;
 
 		//double sigma2=((double)r/3.0+1/6.0);
-		double sigma=((double)sz)/(2*swidth);
+		double sigma=((double)sz)/(2.0*swidth);
 		
 		double s=sigma*sigma;
 		
