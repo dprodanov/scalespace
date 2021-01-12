@@ -1,29 +1,25 @@
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.gui.DialogListener;
-import ij.gui.Roi;
-import ij.measure.Calibration;
-import ij.plugin.filter.Convolver;
+
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
-import ij.process.Blitter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.LUT;
 import ijaux.scale.*;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
+
+import static java.lang.Math.pow;
 
 import dsp.Conv;
 
 /**
- * @version 	1.0 10 Oct 2013
+ * @version 	1.1  8 Jan 2021	
+ * 				1.0 10 Oct 2013
  * 				
  *   
  * 
@@ -32,8 +28,8 @@ import dsp.Conv;
  *
  *
  * @contents
- * The plugin performs anisotropic LoG filtering. The principle is based on Michael Broadhead
- * http://works.bepress.com/cgi/viewcontent.cgi?article=1017&context=michael_broadhead 
+ * The plugin performs anisotropic non linear diffusion
+ *  - mean curvature motion
  * 
  * 
  * @license This library is free software; you can redistribute it and/or
@@ -51,7 +47,7 @@ import dsp.Conv;
  *      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
- /*
+ /*  Mean curvature motion
   *  naive implementation
   */
 public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
@@ -59,11 +55,11 @@ public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
 	private PlugInFilterRunner pfr=null;
 
 	final int flags=DOES_ALL+KEEP_PREVIEW+NO_CHANGES;
-	private String version="2.0";
+	private String version="1.1";
 	private int nPasses=1;
 	private int pass;
  
-	public final static String SIGMA="LOG_sigma", LEN="G_len", NI="G_ier", ORT="G_ortd";
+	public final static String GAMMA="LOG_gamma", LEN="G_len", NI="G_ier", ORT="G_ortd";
  
 	private static int sz= Prefs.getInt(LEN, 9);
 	private static int ni= Prefs.getInt(NI, 10);
@@ -78,7 +74,7 @@ public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
 
 	public boolean isFloat=false;
 	
-	private boolean hasRoi=false;
+	//private boolean hasRoi=false;
 	
 	/**
 	 * 
@@ -90,11 +86,13 @@ public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
 	public int setup(String arg, ImagePlus imp) {
 		image=imp;
 		isFloat= (image.getType()==ImagePlus.GRAY32);
-		hasRoi=imp.getRoi()!=null;
+		//hasRoi=imp.getRoi()!=null;
 		return  flags;
 	}
 
 	final int Ox=0, Oy=1, Oz=2;
+
+	private static float gamma=1.0f;
  /*
   * (non-Javadoc)
   * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
@@ -192,26 +190,23 @@ public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
 				gy*=gy;		
 			
 				double amp=(gx+gy);	
-				//double amp=2.0*(gx+gy);		
+				if (amp==0) amp+= 1e-6;
+				if (gamma!=1.0)
+					amp=-pow(amp,gamma);
 				
-				//directional laplacian components
+				//directional Laplacian components
 				//float lt=(float)((dt-lx)/amp); 
 				//float ot=(float)((dx+lx)/amp);
 				if (ortdir) {
-					double dx=gx*gxx+gy*gyy;
-					float ot=0;
-					if (dx!=0 || amp!=0) {
-						ot=(float)((dx+lx)/amp*step);
-					}
-					float lap_tarr=ot +fpaux.getf(i);
+					final double dx=gx*gxx+gy*gyy;
+					double ot= ((dx+lx)/amp*step);
+					float lap_tarr=(float) (0.5*ot) +fpaux.getf(i);
 					fpaux.setf(i, lap_tarr);
 				} else {
-					double dt=gy*gxx+gx*gyy;
-					float lt=0;
-					if (dt!=0 || amp!=0) {
-						lt=(float)((dt-lx)/amp*step);
-					}
-					float lap_tarr=lt +fpaux.getf(i);
+					final double dt=gy*gxx+gx*gyy;
+					double lt= ((dt-lx)/amp*step);
+				
+					float lap_tarr=(float) (0.5*lt) +fpaux.getf(i);
 					// add oscillation suppression step
 					
 					fpaux.setf(i, lap_tarr);
@@ -255,7 +250,7 @@ public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
 		GenericDialog gd=new GenericDialog("Anisotropic diffusion " + version);
 		gd.addNumericField("half width", r, 1);
 		gd.addNumericField("iterations", ni, 1);
-		//gd.addNumericField("sigma", sigma, 1);
+		gd.addNumericField("power", gamma, 2);
 		gd.addCheckbox("orthogonal", ortdir);
 		gd.addCheckbox("debug", debug);
 	//	gd.addCheckbox("Full output", fulloutput);
@@ -282,7 +277,7 @@ public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		int r = (int)(gd.getNextNumber());
 		ni = (int)(gd.getNextNumber());
-		//sigma = (float) (gd.getNextNumber());
+		gamma = (float) (gd.getNextNumber());
 		ortdir = gd.getNextBoolean();
 		debug = gd.getNextBoolean();
 		//fulloutput = gd.getNextBoolean();
@@ -317,7 +312,7 @@ public class ADiff_Filter_ implements ExtendedPlugInFilter, DialogListener {
 	   		prefs.put(LEN, Integer.toString(sz));
 	   		prefs.put(NI, Integer.toString(ni));
 	   		prefs.put(ORT, Boolean.toString(ortdir));
-         // prefs.put(SIGMA, Float.toString(sigma));
+            prefs.put(GAMMA, Float.toString(gamma));
 
    }
 
