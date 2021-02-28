@@ -200,13 +200,13 @@ public class ALoG_Filter_ implements ExtendedPlugInFilter, DialogListener {
 			double amp=(gx+gy)+ 1e-6;
 			
 			if (abs(amp) > 1e-4) { 	
-				float lt=(float)((dt-lx)/amp);
+				float lt=(float)((dt-lx)/amp); // curvature like
 				float ot=(float)((dx+lx)/amp);
 				
 				if (abs(lt) <1e-8) lt=0;
 				if (abs(ot) <1e-8) ot=0;	
 				
-				lap_t.setf(i, lt);
+				lap_t.setf(i, lt); // curvature like
 				lap_o.setf(i, ot);
 			} 
 			
