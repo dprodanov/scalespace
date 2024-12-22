@@ -648,7 +648,7 @@ public class GScaleSpace {
 			for (int w=-r; w<=r; w++) {
 				final double x2=u*u+w*w;
 				final int idx=sz*(u+r) + (w+r);
-				kernel[idx]=(float)((x2 -2*sigma2)*Math.exp(-0.5*x2/sigma2)*PIs);
+				kernel[idx]=(float)((x2 -2*sigma2)*exp(-0.5*x2/sigma2)*PIs);
 				if (debug)
 					System.out.print(kernel[idx] +" ");		
 			}
